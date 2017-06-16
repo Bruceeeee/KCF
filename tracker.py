@@ -98,8 +98,8 @@ def update_tracker(response,img_size,pos,HOG_flag,scale_factor=1):
     scale_h = 1.0*scale_factor*(wh*2)/start_h
     move = list(res_pos)
     if not HOG_flag:
-        px_new = [px+1.0*move[0]*scale_w,px-(2*ww-1.0*move[0])*scale_w][move[0]>ww] 
-        py_new = [py+1.0*move[1]*scale_h,py-(2*wh-1.0*move[1])*scale_h][move[1]>wh]
+        px_new = [px+1.0*move[0]*scale_w,px-(start_w-1.0*move[0])*scale_w][move[0]>start_w/2] 
+        py_new = [py+1.0*move[1]*scale_h,py-(start_h-1.0*move[1])*scale_h][move[1]>start_h/2]
         px_new = np.int(px_new) 
         py_new = np.int(py_new)
     else:
@@ -111,20 +111,20 @@ def update_tracker(response,img_size,pos,HOG_flag,scale_factor=1):
     if px_new>w: px_new = w-1
     if py_new<0: py_new = 0
     if py_new>h: py_new = h-1
-    ww_new = np.floor(ww*scale_factor)
-    wh_new = np.floor(wh*scale_factor)
+    ww_new = np.ceil(ww*scale_factor)
+    wh_new = np.ceil(wh*scale_factor)
     new_pos = (px_new,py_new,ww_new,wh_new)
     return new_pos
 
-def get_window(img,bbox,scale_factor,rez_shape=None):
+def get_window(img, bbox, padding, scale_factor=1 ,rez_shape=None):
     (x,y,w,h) = bbox
     ix,iy = img.shape[0],img.shape[1]
-    center_x = x+np.floor(w/2.0)
-    center_y = y+np.floor(h/2.0)
+    center_x = np.int(x+np.floor(w/2.0))
+    center_y = np.int(y+np.floor(h/2.0))
     w = np.floor(1.0*w*scale_factor)
     h = np.floor(1.0*h*scale_factor)
-    x_min,x_max = np.int(center_x-w),np.int(center_x+w)
-    y_min,y_max = np.int(center_y-h),np.int(center_y+h)
+    x_min,x_max = center_x-np.int(w*padding/2.0),center_x+np.int(w*padding/2.0)
+    y_min,y_max = center_y-np.int(h*padding/2.0),center_y+np.int(h*padding/2.0)
     if (x_max-x_min)%2!=0:
         x_max+=1
     if (y_max-y_min)%2!=0:
