@@ -17,6 +17,7 @@ def main(args):
     save_flag = args.save_img
     resize = args.resize
     show_result = args.show_result
+    padding = 2
     
    
 
@@ -32,7 +33,7 @@ def main(args):
 
 
     # Get image information and init parameter
-    output_sigma_factor = 1 / float(8)
+    output_sigma_factor = 1 / float(16)
     img = cv2.imread(img_lst[0],img_channel)
     if resize:
         img_size = np.int(img.shape[0]/2),np.int(img.shape[1]/2)
@@ -43,17 +44,20 @@ def main(args):
         l = 0.0001
         sigma = 0.6
         inter_factor = 0.012
+        scale_weight = 0.95
     else:
-        target_size = 2*w,2*h
+        target_size = np.int(padding/2*w)*2,np.int(padding/2*h)*2
         l = 0.0001
         sigma = 0.2
-        inter_factor = 0.02
+        inter_factor = 0.025
+        scale_weight = 0.95
     f = inter_factor
 
     # Generate y label
     output_sigma = np.sqrt(np.prod(target_size)) * output_sigma_factor
     cos_window = np.outer(np.hanning(target_size[0]),np.hanning(target_size[1]))
     y = tracker.generate_gaussian(target_size,output_sigma)
+    rez_shape = y.shape
 
     # Create file to save result
     tracker_bb =[]
@@ -67,18 +71,33 @@ def main(args):
         if resize:
            img = cv2.resize(img,img_size[::-1])
         if i==0:
-            x =  tracker.get_window(img,pos,scale_factor)
+            x =  tracker.get_window(img, pos, padding, scale_factor, rez_shape)
             x = tracker.getFeature(x,cos_window,HOG_flag)
             alpha = tracker.train(x,y,sigma,l)
             z = x
+            best_scale = 1
         else:
-            x = tracker.get_window(img,pos,scale_factor)
+            x = tracker.get_window(img, pos, padding, scale_factor,rez_shape)
             x = tracker.getFeature(x,cos_window,HOG_flag)
             response = tracker.detect(alpha,x,z,sigma)
+            best_scale = 1
+            peak_res = response.max()
+            if scale_factor!=1:
+                Allscale = [1.0/scale_factor,scale_factor]
+                for scale in Allscale:
+                    x = tracker.get_window(img, pos, padding, scale,rez_shape)
+                    x = tracker.getFeature(x,cos_window,HOG_flag)
+                    res = tracker.detect(alpha,x,z,sigma)
+                    if res.max()*scale_weight > peak_res:
+                        peak_res = res.max()
+                        best_scale = scale
+                        response = res
+
+
 
             # Update position x z alpha
-            new_pos = tracker.update_tracker(response,img_size,pos,HOG_flag)
-            x = tracker.get_window(img,new_pos,scale_factor)
+            new_pos = tracker.update_tracker(response,img_size,pos,HOG_flag,best_scale)
+            x = tracker.get_window(img, new_pos, padding, 1, rez_shape)
             x = tracker.getFeature(x,cos_window,HOG_flag)
             new_alpha = tracker.train(x,y,sigma,l)
             alpha = f*new_alpha+(1-f)*alpha
