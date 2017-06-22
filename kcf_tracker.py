@@ -1,6 +1,7 @@
 import tracker
 import numpy as np
 import cv2
+import HOG
 
 class Kcftracker(object):
 	def __init__(self, img, start_pos, HOG_flag=0, dataformat=1, resize=1):
@@ -46,7 +47,7 @@ class Kcftracker(object):
      
        
 
-	def updateTraker(self, img):
+	def updateTracker(self, img):
 		 if self.resize:
 		 	img = cv2.resize(img,self.img_size[::-1])
 		 x = tracker.get_window(img, self.pos, self.padding, 1, self.target_size)
@@ -61,11 +62,9 @@ class Kcftracker(object):
 		 self.z = (1-self.f)*self.z + self.f*new_z
 		 self.pos = new_pos
 		 output_pos = self.pos
-		 print self.pos
 		 if self.resize:
 		 	output_pos = tuple([ele*2 for ele in self.pos])
 		 if self.dataformat:
 			output_pos = output_pos[0],output_pos[1],output_pos[0]+output_pos[2],output_pos[1]+output_pos[3]
-		 print output_pos
 		 return output_pos
 
