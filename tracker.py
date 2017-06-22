@@ -3,7 +3,7 @@ import numpy as np
 import cv2 
 import HOG
 
-def load_bbox(ground_file,resize):
+def load_bbox(ground_file,resize,dataformat=0):
     f = open(ground_file)
     lines=f.readlines()
     bbox=[]
@@ -16,6 +16,9 @@ def load_bbox(ground_file,resize):
          bbox = (bbox.astype('float32')/2).astype('int')
     else:
         bbox = bbox.astype('float32').astype('int')
+    if dataformat:
+        bbox[:,2] = bbox[:,0]+bbox[:,2]
+        bbox[:,3] = bbox[:,1]+bbox[:,3]
     return bbox
 
 def load_imglst(img_dir):

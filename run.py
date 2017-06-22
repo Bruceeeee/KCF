@@ -4,8 +4,8 @@ import tracker
 import os
 import argparse
 import sys
-import HOG
 import time
+import util
 
 def main(args):
     # Load  arg
@@ -24,8 +24,8 @@ def main(args):
     # Load dataset information and get start position
     title = dataset.split('/')
     title = [ t for t in title if t][-1]
-    img_lst = tracker.load_imglst(dataset)
-    bbox_lst = tracker.load_bbox(os.path.join(dataset+'/groundtruth.txt'),resize)
+    img_lst = util.load_imglst(dataset)
+    bbox_lst = util.load_bbox(os.path.join(dataset+'/groundtruth.txt'),resize)
     py,px,h,w = bbox_lst[0]
     pos = (px,py,w,h)
     o_w,o_h = w,h
@@ -49,7 +49,7 @@ def main(args):
         target_size = np.int(padding/2*w)*2,np.int(padding/2*h)*2
         l = 0.0001
         sigma = 0.2
-        inter_factor = 0.025
+        inter_factor = 0.02
         scale_weight = 0.95
     f = inter_factor
 
@@ -120,9 +120,9 @@ def main(args):
     print ('each frame costs %3f second, fps is %d'%(duration/frames,fps))
     file.close()
     
-    result = tracker.load_bbox(result_file,0)
+    result = util.load_bbox(result_file,0)
     if show_result:
-        tracker.display_tracker(img_lst,result,save_flag)
+        util.display_tracker(img_lst,result,save_flag)
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
